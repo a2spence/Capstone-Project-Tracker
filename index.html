@@ -154,7 +154,8 @@
             });
         }
 
-        // Add a new contribution to Supabase
+        const TEAM_PASSCODE = "password"; 
+
         async function addContribution() {
             const person = document.getElementById("person").value;
             const hours = document.getElementById("hours").value;
@@ -162,6 +163,12 @@
 
             if (!hours || !description) {
                 alert("Please enter hours and a description.");
+                return;
+            }
+
+            const userCode = prompt("Enter the team passcode to submit a contribution:");
+            if (userCode !== TEAM_PASSCODE) {
+                alert("Incorrect passcode! You do not have permission to post.");
                 return;
             }
 
@@ -173,11 +180,11 @@
 
             if (error) {
                 console.error("Error adding contribution:", error);
-                alert("Failed to submit contribution. Make sure RLS permissions are set up.");
+                alert("Failed to submit contribution. Check RLS settings.");
             } else {
                 document.getElementById("hours").value = "";
                 document.getElementById("description").value = "";
-                fetchContributions(); // Refresh the table
+                fetchContributions(); // Refresh the table list
             }
         }
 
