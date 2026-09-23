@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Group Contribution Tracker</title>
 
+    <!-- Supabase JS CDN Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -88,9 +91,9 @@
         <label for="person">Person</label>
         <select id="person">
             <option>Amy</option>
-            <option>Person 2</option>
-            <option>Person 3</option>
-            <option>Person 4</option>
+            <option>Hannah</option>
+            <option>Sabrina</option>
+            <option>Vanessa</option>
         </select>
 
         <label for="hours">Hours</label>
@@ -123,32 +126,63 @@
     </div>
 
     <script>
+        const SUPABASE_URL = 'https://cwvitqpybgcnmxbobyyd.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_lDsA_0I27CFGAe26sI1GHA_kzoOjAkU';
 
-        function addContribution() {
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Fetch existing contributions when the page loads
+        async function fetchContributions() {
+            const { data, error } = await supabaseClient
+                .from('contributions')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error fetching contributions:", error);
+                return;
+            }
+
+            const table = document.getElementById("contributionTable");
+            table.innerHTML = ""; // Clear existing rows
+
+            data.forEach(item => {
+                const row = table.insertRow();
+                row.insertCell(0).textContent = item.person;
+                row.insertCell(1).textContent = item.hours;
+                row.insertCell(2).textContent = item.description;
+            });
+        }
+
+        // Add a new contribution to Supabase
+        async function addContribution() {
             const person = document.getElementById("person").value;
             const hours = document.getElementById("hours").value;
-            const description =
-                document.getElementById("description").value;
+            const description = document.getElementById("description").value;
 
             if (!hours || !description) {
                 alert("Please enter hours and a description.");
                 return;
             }
 
-            const table =
-                document.getElementById("contributionTable");
+            const { data, error } = await supabaseClient
+                .from('contributions')
+                .insert([
+                    { person: person, hours: parseFloat(hours), description: description }
+                ]);
 
-            const row = table.insertRow();
-
-            row.insertCell(0).textContent = person;
-            row.insertCell(1).textContent = hours;
-            row.insertCell(2).textContent = description;
-
-            document.getElementById("hours").value = "";
-            document.getElementById("description").value = "";
+            if (error) {
+                console.error("Error adding contribution:", error);
+                alert("Failed to submit contribution. Make sure RLS permissions are set up.");
+            } else {
+                document.getElementById("hours").value = "";
+                document.getElementById("description").value = "";
+                fetchContributions(); // Refresh the table
+            }
         }
 
+        // Run fetch on initial page load
+        fetchContributions();
     </script>
 
 </body>
