@@ -78,6 +78,37 @@
         th {
             background: #f0f0f0;
         }
+
+        .people-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+            margin-top: 5px;
+        }
+
+        .people-options label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 0;
+            font-weight: normal;
+        }
+
+        .people-options input {
+            width: auto;
+            margin: 0;
+        }
+
+        .attachments a {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .attachments img {
+            max-width: 80px;
+            max-height: 80px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 
@@ -88,13 +119,13 @@
     <div class="card">
         <h2>Add Contribution</h2>
 
-        <label for="person">Person</label>
-        <select id="person">
-            <option>Amy</option>
-            <option>Hannah</option>
-            <option>Sabrina</option>
-            <option>Vanessa</option>
-        </select>
+        <label>People</label>
+        <div class="people-options" id="people">
+            <label><input type="checkbox" value="Amy"> Amy</label>
+            <label><input type="checkbox" value="Hannah"> Hannah</label>
+            <label><input type="checkbox" value="Sabrina"> Sabrina</label>
+            <label><input type="checkbox" value="Vanessa"> Vanessa</label>
+        </div>
 
         <label for="hours">Hours</label>
         <input type="number" id="hours" min="0" step="0.5">
@@ -102,6 +133,10 @@
         <label for="description">What did you do?</label>
         <textarea id="description"
             placeholder="Describe what you worked on..."></textarea>
+
+        <label for="files">Attachments (optional)</label>
+        <input type="file" id="files" multiple
+            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png">
 
         <button onclick="addContribution()">
             Add Contribution
@@ -117,6 +152,7 @@
                     <th>Person</th>
                     <th>Hours</th>
                     <th>What they did</th>
+                    <th>Attachments</th>
                 </tr>
             </thead>
 
@@ -151,15 +187,58 @@
                 row.insertCell(0).textContent = item.person;
                 row.insertCell(1).textContent = item.hours;
                 row.insertCell(2).textContent = item.description;
+
+                const attachCell = row.insertCell(3);
+                attachCell.className = "attachments";
+                (item.attachments || []).forEach(file => {
+                    const link = document.createElement("a");
+                    link.href = file.url;
+                    link.target = "_blank";
+                    link.rel = "noopener";
+                    if (/\.(jpe?g|png)$/i.test(file.name)) {
+                        const img = document.createElement("img");
+                        img.src = file.url;
+                        img.alt = file.name;
+                        link.appendChild(img);
+                    } else {
+                        link.textContent = file.name;
+                    }
+                    attachCell.appendChild(link);
+                });
             });
         }
 
-        const TEAM_PASSCODE = "password"; 
+        // Upload files to the "attachments" storage bucket and return their names + public URLs
+        async function uploadFiles(files) {
+            const uploaded = [];
+            for (const file of files) {
+                const safeName = file.name.replace(/[^\w.\-]/g, "_");
+                const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+
+                const { error } = await supabaseClient.storage
+                    .from('attachments')
+                    .upload(path, file);
+
+                if (error) throw error;
+
+                const { data } = supabaseClient.storage.from('attachments').getPublicUrl(path);
+                uploaded.push({ name: file.name, url: data.publicUrl });
+            }
+            return uploaded;
+        }
+
+        const TEAM_PASSCODE = "password";
 
         async function addContribution() {
-            const person = document.getElementById("person").value;
+            const people = [...document.querySelectorAll("#people input:checked")].map(cb => cb.value);
             const hours = document.getElementById("hours").value;
             const description = document.getElementById("description").value;
+            const files = document.getElementById("files").files;
+
+            if (people.length === 0) {
+                alert("Please select at least one person.");
+                return;
+            }
 
             if (!hours || !description) {
                 alert("Please enter hours and a description.");
@@ -172,18 +251,34 @@
                 return;
             }
 
+            let attachments = [];
+            try {
+                attachments = await uploadFiles(files);
+            } catch (uploadError) {
+                console.error("Error uploading files:", uploadError);
+                alert("Failed to upload attachments. Check the storage bucket settings.");
+                return;
+            }
+
             const { data, error } = await supabaseClient
                 .from('contributions')
                 .insert([
-                    { person: person, hours: parseFloat(hours), description: description }
+                    {
+                        person: people.join(", "),
+                        hours: parseFloat(hours),
+                        description: description,
+                        attachments: attachments
+                    }
                 ]);
 
             if (error) {
                 console.error("Error adding contribution:", error);
                 alert("Failed to submit contribution. Check RLS settings.");
             } else {
+                document.querySelectorAll("#people input").forEach(cb => cb.checked = false);
                 document.getElementById("hours").value = "";
                 document.getElementById("description").value = "";
+                document.getElementById("files").value = "";
                 fetchContributions(); // Refresh the table list
             }
         }
