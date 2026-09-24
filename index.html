@@ -208,7 +208,7 @@
             });
         }
 
-        // Upload files to the "attachments" storage bucket and return their names + public URLs
+        // Upload files to the "Attachments" storage bucket and return their names + public URLs
         async function uploadFiles(files) {
             const uploaded = [];
             for (const file of files) {
@@ -216,12 +216,12 @@
                 const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
 
                 const { error } = await supabaseClient.storage
-                    .from('attachments')
+                    .from('Attachments')
                     .upload(path, file);
 
                 if (error) throw error;
 
-                const { data } = supabaseClient.storage.from('attachments').getPublicUrl(path);
+                const { data } = supabaseClient.storage.from('Attachments').getPublicUrl(path);
                 uploaded.push({ name: file.name, url: data.publicUrl });
             }
             return uploaded;
