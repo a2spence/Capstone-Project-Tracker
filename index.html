@@ -783,8 +783,8 @@
             try {
                 attachments = await uploadFiles(files);
             } catch (uploadError) {
-                console.error('Error uploading files:', uploadError);
-                alert('Failed to upload attachments. Check the storage bucket settings.');
+                console.error("Error uploading files:", uploadError);
+                alert("Failed to upload attachment: " + uploadError.message);
                 return;
             }
 
