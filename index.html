@@ -449,7 +449,6 @@
             <nav>
                 <button id="overviewTab" class="active" onclick="showSection('overview')">Overview</button>
                 <button id="logTab" onclick="showSection('designLog')">Design Log</button>
-                <button id="teamTab" onclick="showSection('team')">Team</button>
                 <button id="addTab" onclick="showSection('addEntry')">Add Entry</button>
             </nav>
         </div>
@@ -626,7 +625,7 @@
         const SUPABASE_KEY = 'sb_publishable_lDsA_0I27CFGAe26sI1GHA_kzoOjAkU';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const TEAM_PASSCODE = "password";
+        const TEAM_PASSCODE = "capstone";
         let contributions = [];
         let editingEntryId = null;
         let editingExistingAttachments = [];
