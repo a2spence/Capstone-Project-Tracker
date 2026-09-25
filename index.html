@@ -1096,12 +1096,7 @@
             showSection('overview');
         }
 
-        document.getElementById('entryDate').valueAsDate = new Date();
-
-            await fetchContributions();
-            showSection('overview');
-        }
-
+        // Initialize the form and load entries when the page opens.
         resetEntryForm();
         fetchContributions();
     </script>
