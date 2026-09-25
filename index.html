@@ -359,47 +359,6 @@
             background: #fef2f2;
         }
 
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px;
-        }
-
-        .team-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .team-card h3 {
-            margin: 0 0 14px;
-        }
-
-        .team-stats {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-
-        .team-stat {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 12px;
-        }
-
-        .team-stat strong {
-            display: block;
-            font-size: 1.25rem;
-            margin-bottom: 3px;
-        }
-
-        .team-stat span {
-            color: var(--muted);
-            font-size: 0.82rem;
-        }
-
         .category-summary {
             display: flex;
             flex-wrap: wrap;
@@ -420,9 +379,6 @@
             .summary-grid,
             .filters,
             .form-grid,
-            .team-grid {
-                grid-template-columns: 1fr;
-            }
 
             .full-width {
                 grid-column: auto;
@@ -531,20 +487,7 @@
             </div>
         </section>
 
-
-        <!-- TEAM -->
-        <section id="teamSection" class="hidden">
-            <div class="section-heading">
-                <div>
-                    <h2>Team Contributions</h2>
-                    <p style="margin:6px 0 0;color:#6b7280;">A summary of each member's logged design work.</p>
-                </div>
-            </div>
-
-            <div id="teamGrid" class="team-grid"></div>
-        </section>
-
-        <!-- ADD ENTRY -->
+<!-- ADD ENTRY -->
         <section id="addEntrySection" class="hidden">
             <div class="section-heading">
                 <div>
@@ -634,14 +577,12 @@
             const sectionMap = {
                 overview: document.getElementById('overviewSection'),
                 designLog: document.getElementById('designLogSection'),
-                team: document.getElementById('teamSection'),
                 addEntry: document.getElementById('addEntrySection')
             };
 
             const tabMap = {
                 overview: document.getElementById('overviewTab'),
                 designLog: document.getElementById('logTab'),
-                team: document.getElementById('teamTab'),
                 addEntry: document.getElementById('addTab')
             };
 
@@ -652,7 +593,6 @@
             tabMap[sectionName].classList.add('active');
 
             if (sectionName === 'designLog') renderFullLog();
-            if (sectionName === 'team') renderTeam();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -847,60 +787,6 @@
             filtered.forEach(item => container.appendChild(buildLogCard(item)));
         }
 
-        function renderTeam() {
-            const container = document.getElementById('teamGrid');
-            const members = ['Amy', 'Hannah', 'Sabrina', 'Vanessa'];
-            container.innerHTML = '';
-
-            members.forEach(member => {
-                const entries = contributions.filter(item => item.person === member);
-                const hours = entries.reduce((sum, item) => sum + Number(item.hours || 0), 0);
-                const categories = {};
-
-                entries.forEach(item => {
-                    const category = item.category || 'Other';
-                    categories[category] = (categories[category] || 0) + 1;
-                });
-
-                const card = document.createElement('div');
-                card.className = 'team-card';
-
-                const heading = document.createElement('h3');
-                heading.textContent = member;
-                card.appendChild(heading);
-
-                const stats = document.createElement('div');
-                stats.className = 'team-stats';
-                stats.innerHTML = `
-                    <div class="team-stat"><strong>${entries.length}</strong><span>${entries.length === 1 ? 'entry' : 'entries'}</span></div>
-                    <div class="team-stat"><strong>${Number.isInteger(hours) ? hours : hours.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')}</strong><span>hours logged</span></div>
-                `;
-                card.appendChild(stats);
-
-                const categorySummary = document.createElement('div');
-                categorySummary.className = 'category-summary';
-
-                if (Object.keys(categories).length === 0) {
-                    const empty = document.createElement('span');
-                    empty.style.color = 'var(--muted)';
-                    empty.style.fontSize = '0.88rem';
-                    empty.textContent = 'No entries yet.';
-                    categorySummary.appendChild(empty);
-                } else {
-                    Object.entries(categories).sort((a, b) => b[1] - a[1]).forEach(([category, count]) => {
-                        const badge = document.createElement('span');
-                        const slug = categoryClass(category);
-                        badge.className = `category-badge ${slug}`;
-                        badge.innerHTML = `<span class="category-dot"></span>${category}: ${count}`;
-                        categorySummary.appendChild(badge);
-                    });
-                }
-
-                card.appendChild(categorySummary);
-                container.appendChild(card);
-            });
-        }
-
         function resetEntryForm() {
             editingEntryId = null;
             editingExistingAttachments = [];
@@ -1002,7 +888,6 @@
             updateSummary();
             renderRecentLog();
             renderFullLog();
-            renderTeam();
         }
 
         async function uploadFiles(files) {
