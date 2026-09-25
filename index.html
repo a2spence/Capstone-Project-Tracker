@@ -3,216 +3,743 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group Contribution Tracker</title>
+    <title>MTE 481 Design Log</title>
 
     <!-- Supabase JS CDN Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
+        :root {
+            --bg: #f5f7fb;
+            --surface: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --accent: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
+            margin: 0;
             font-family: Arial, sans-serif;
-            max-width: 900px;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .page-shell {
+            max-width: 1100px;
             margin: 0 auto;
-            padding: 40px 20px;
-            background: #f5f5f5;
+            padding: 0 20px 50px;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 0;
+        }
+
+        .project-label {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
         h1 {
-            text-align: center;
+            margin: 6px 0 18px;
+            font-size: 2rem;
         }
 
-        .card {
-            background: white;
-            padding: 25px;
-            margin-top: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        nav {
+            display: flex;
+            gap: 24px;
+        }
+
+        nav button {
+            border: none;
+            background: transparent;
+            padding: 12px 0;
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+
+        nav button:hover,
+        nav button.active {
+            color: var(--text);
+            border-bottom-color: var(--text);
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 16px;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card,
+        .panel,
+        .log-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .summary-card {
+            padding: 22px;
+        }
+
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .panel {
+            padding: 24px;
+            margin-bottom: 28px;
+        }
+
+        .primary-button,
+        .secondary-button {
+            border: none;
+            border-radius: 7px;
+            padding: 10px 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .primary-button {
+            background: var(--accent);
+            color: white;
+        }
+
+        .primary-button:hover {
+            background: #374151;
+        }
+
+        .secondary-button {
+            background: #eef1f5;
+            color: var(--text);
+        }
+
+        .secondary-button:hover {
+            background: #e2e7ee;
+        }
+
+        .log-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .log-card {
+            padding: 20px;
+            border-left: 5px solid #9ca3af;
+        }
+
+        .log-card.mechanical { border-left-color: #f59e0b; }
+        .log-card.electrical { border-left-color: #3b82f6; }
+        .log-card.software { border-left-color: #8b5cf6; }
+        .log-card.testing { border-left-color: #10b981; }
+        .log-card.research { border-left-color: #ec4899; }
+        .log-card.documentation { border-left-color: #64748b; }
+        .log-card.other { border-left-color: #9ca3af; }
+
+        .log-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 8px 16px;
+            margin-bottom: 12px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .log-meta-left {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 14px;
+            align-items: center;
+        }
+
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 5px 9px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .category-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+        }
+
+        .category-badge.mechanical .category-dot { background: #f59e0b; }
+        .category-badge.electrical .category-dot { background: #3b82f6; }
+        .category-badge.software .category-dot { background: #8b5cf6; }
+        .category-badge.testing .category-dot { background: #10b981; }
+        .category-badge.research .category-dot { background: #ec4899; }
+        .category-badge.documentation .category-dot { background: #64748b; }
+        .category-badge.other .category-dot { background: #9ca3af; }
+
+        .log-title {
+            margin: 0 0 8px;
+            font-size: 1.08rem;
+        }
+
+        .log-description {
+            margin: 0;
+            line-height: 1.55;
+        }
+
+        .outcome-box {
+            margin-top: 14px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-radius: 8px;
+            line-height: 1.45;
+        }
+
+        .outcome-box strong {
+            display: block;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .attachments {
+            margin-top: 12px;
+        }
+
+        .attachments a {
+            display: inline-block;
+            margin: 4px 8px 0 0;
+            color: #2563eb;
+        }
+
+        .attachments img {
+            display: block;
+            max-width: 110px;
+            max-height: 85px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr;
+            gap: 12px;
+            margin-bottom: 18px;
         }
 
         label {
             display: block;
             margin-top: 15px;
             font-weight: bold;
+            font-size: 0.92rem;
         }
 
-        input, select, textarea {
+        input,
+        select,
+        textarea {
             width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            padding: 10px 11px;
+            margin-top: 6px;
+            border: 1px solid #cfd5dd;
+            border-radius: 7px;
+            font: inherit;
+            background: white;
         }
 
         textarea {
-            height: 100px;
+            min-height: 110px;
             resize: vertical;
         }
 
-        button {
-            margin-top: 20px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 5px;
-            background: #333;
-            color: white;
-            cursor: pointer;
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0 16px;
         }
 
-        button:hover {
-            background: #555;
+        .full-width {
+            grid-column: 1 / -1;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
-
-        th {
-            background: #f0f0f0;
-        }
-
-        .people-options {
+        .form-actions {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px 20px;
-            margin-top: 5px;
+            justify-content: flex-end;
+            margin-top: 18px;
         }
 
-        .people-options label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 0;
-            font-weight: normal;
+        .empty-state {
+            padding: 22px;
+            text-align: center;
+            color: var(--muted);
+            background: #f8fafc;
+            border-radius: 9px;
+            border: 1px dashed #cbd5e1;
         }
 
-        .people-options input {
-            width: auto;
-            margin: 0;
+        .hidden {
+            display: none !important;
         }
 
-        .attachments a {
-            display: block;
-            margin-bottom: 4px;
-        }
+        @media (max-width: 760px) {
+            .summary-grid,
+            .filters,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
 
-        .attachments img {
-            max-width: 80px;
-            max-height: 80px;
-            border-radius: 4px;
+            .full-width {
+                grid-column: auto;
+            }
+
+            .section-heading {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            nav {
+                gap: 16px;
+                overflow-x: auto;
+            }
         }
     </style>
 </head>
 
 <body>
-
-    <h1>Group Contribution Tracker</h1>
-
-    <div class="card">
-        <h2>Add Contribution</h2>
-
-        <label>People</label>
-        <div class="people-options" id="people">
-            <label><input type="checkbox" value="Amy"> Amy</label>
-            <label><input type="checkbox" value="Hannah"> Hannah</label>
-            <label><input type="checkbox" value="Sabrina"> Sabrina</label>
-            <label><input type="checkbox" value="Vanessa"> Vanessa</label>
+    <header>
+        <div class="header-inner">
+            <p class="project-label">MTE 481 • Design Log</p>
+            <h1>Project Design Log</h1>
+            <nav>
+                <button id="overviewTab" class="active" onclick="showSection('overview')">Overview</button>
+                <button id="logTab" onclick="showSection('designLog')">Design Log</button>
+                <button id="addTab" onclick="showSection('addEntry')">Add Entry</button>
+            </nav>
         </div>
+    </header>
 
-        <label for="hours">Hours</label>
-        <input type="number" id="hours" min="0" step="0.5">
+    <main class="page-shell">
+        <!-- OVERVIEW -->
+        <section id="overviewSection">
+            <div class="section-heading">
+                <h2>Project Overview</h2>
+                <button class="primary-button" onclick="showSection('addEntry')">+ Add Entry</button>
+            </div>
 
-        <label for="description">What did you do?</label>
-        <textarea id="description"
-            placeholder="Describe what you worked on..."></textarea>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-value" id="entryCount">0</div>
+                    <div class="summary-label">Design log entries</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" id="totalHours">0</div>
+                    <div class="summary-label">Total hours logged</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" id="lastEntryDate">—</div>
+                    <div class="summary-label">Most recent entry</div>
+                </div>
+            </div>
 
-        <label for="files">Attachments (optional)</label>
-        <input type="file" id="files" multiple
-            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png">
+            <div class="panel">
+                <div class="section-heading">
+                    <h2>Recent Design Log</h2>
+                    <button class="secondary-button" onclick="showSection('designLog')">View all entries →</button>
+                </div>
+                <div id="recentLog" class="log-list"></div>
+            </div>
+        </section>
 
-        <button onclick="addContribution()">
-            Add Contribution
-        </button>
-    </div>
+        <!-- FULL DESIGN LOG -->
+        <section id="designLogSection" class="hidden">
+            <div class="section-heading">
+                <div>
+                    <h2>Design Log</h2>
+                    <p style="margin:6px 0 0;color:#6b7280;">Individual project contributions in chronological order.</p>
+                </div>
+                <button class="primary-button" onclick="showSection('addEntry')">+ Add Entry</button>
+            </div>
 
-    <div class="card">
-        <h2>Contributions</h2>
+            <div class="panel">
+                <div class="filters">
+                    <div>
+                        <label for="filterPerson" style="margin-top:0;">Member</label>
+                        <select id="filterPerson" onchange="renderFullLog()">
+                            <option value="">All members</option>
+                            <option value="Amy">Amy</option>
+                            <option value="Hannah">Hannah</option>
+                            <option value="Sabrina">Sabrina</option>
+                            <option value="Vanessa">Vanessa</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filterCategory" style="margin-top:0;">Category</label>
+                        <select id="filterCategory" onchange="renderFullLog()">
+                            <option value="">All categories</option>
+                            <option>Mechanical</option>
+                            <option>Electrical</option>
+                            <option>Software</option>
+                            <option>Testing</option>
+                            <option>Research</option>
+                            <option>Documentation</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filterSearch" style="margin-top:0;">Search</label>
+                        <input id="filterSearch" type="search" placeholder="Search title, progress, or next step..." oninput="renderFullLog()">
+                    </div>
+                </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Person</th>
-                    <th>Hours</th>
-                    <th>What they did</th>
-                    <th>Attachments</th>
-                </tr>
-            </thead>
+                <div id="fullLog" class="log-list"></div>
+            </div>
+        </section>
 
-            <tbody id="contributionTable">
-            </tbody>
-        </table>
-    </div>
+        <!-- ADD ENTRY -->
+        <section id="addEntrySection" class="hidden">
+            <div class="section-heading">
+                <div>
+                    <h2>Add Design Log Entry</h2>
+                    <p style="margin:6px 0 0;color:#6b7280;">Create one entry per person's individual contribution.</p>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="form-grid">
+                    <div>
+                        <label for="entryDate">Date</label>
+                        <input type="date" id="entryDate">
+                    </div>
+
+                    <div>
+                        <label for="person">Member</label>
+                        <select id="person">
+                            <option value="">Select a member</option>
+                            <option value="Amy">Amy</option>
+                            <option value="Hannah">Hannah</option>
+                            <option value="Sabrina">Sabrina</option>
+                            <option value="Vanessa">Vanessa</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="category">Category</label>
+                        <select id="category">
+                            <option value="">Select a category</option>
+                            <option>Mechanical</option>
+                            <option>Electrical</option>
+                            <option>Software</option>
+                            <option>Testing</option>
+                            <option>Research</option>
+                            <option>Documentation</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="hours">Hours</label>
+                        <input type="number" id="hours" min="0" step="0.25" placeholder="e.g. 2.5">
+                    </div>
+
+                    <div class="full-width">
+                        <label for="title">Entry Title</label>
+                        <input type="text" id="title" placeholder="e.g. Motor driver current testing">
+                    </div>
+
+                    <div class="full-width">
+                        <label for="description">Contribution / Progress</label>
+                        <textarea id="description" placeholder="Describe specifically what you worked on, what you changed or tested, and any relevant results..."></textarea>
+                    </div>
+
+                    <div class="full-width">
+                        <label for="outcome">Outcome / Next Step</label>
+                        <textarea id="outcome" placeholder="What was concluded, decided, or what should happen next?"></textarea>
+                    </div>
+
+                    <div class="full-width">
+                        <label for="files">Attachments (optional)</label>
+                        <input type="file" id="files" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="primary-button" onclick="addContribution()">Save Design Log Entry</button>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script>
         const SUPABASE_URL = 'https://cwvitqpybgcnmxbobyyd.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_lDsA_0I27CFGAe26sI1GHA_kzoOjAkU';
-
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Fetch existing contributions when the page loads
+        const TEAM_PASSCODE = "password";
+        let contributions = [];
+
+        function showSection(sectionName) {
+            const sectionMap = {
+                overview: document.getElementById('overviewSection'),
+                designLog: document.getElementById('designLogSection'),
+                addEntry: document.getElementById('addEntrySection')
+            };
+
+            const tabMap = {
+                overview: document.getElementById('overviewTab'),
+                designLog: document.getElementById('logTab'),
+                addEntry: document.getElementById('addTab')
+            };
+
+            Object.values(sectionMap).forEach(section => section.classList.add('hidden'));
+            Object.values(tabMap).forEach(tab => tab.classList.remove('active'));
+
+            sectionMap[sectionName].classList.remove('hidden');
+            tabMap[sectionName].classList.add('active');
+
+            if (sectionName === 'designLog') renderFullLog();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function categoryClass(category) {
+            return (category || 'Other').toLowerCase().replace(/\s+/g, '-');
+        }
+
+        function displayDate(item) {
+            const rawDate = item.entry_date || item.created_at;
+            if (!rawDate) return 'No date';
+
+            // For YYYY-MM-DD values, force local interpretation so the date does not shift by timezone.
+            const date = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
+                ? new Date(rawDate + 'T00:00:00')
+                : new Date(rawDate);
+
+            return date.toLocaleDateString('en-CA', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function createAttachmentElements(container, attachments) {
+            (attachments || []).forEach(file => {
+                const link = document.createElement('a');
+                link.href = file.url;
+                link.target = '_blank';
+                link.rel = 'noopener';
+
+                if (/\.(jpe?g|png)$/i.test(file.name)) {
+                    const img = document.createElement('img');
+                    img.src = file.url;
+                    img.alt = file.name;
+                    link.appendChild(img);
+                } else {
+                    link.textContent = file.name;
+                }
+
+                container.appendChild(link);
+            });
+        }
+
+        function buildLogCard(item) {
+            const category = item.category || 'Other';
+            const categorySlug = categoryClass(category);
+
+            const card = document.createElement('article');
+            card.className = `log-card ${categorySlug}`;
+
+            const meta = document.createElement('div');
+            meta.className = 'log-meta';
+
+            const metaLeft = document.createElement('div');
+            metaLeft.className = 'log-meta-left';
+
+            const date = document.createElement('strong');
+            date.textContent = displayDate(item);
+
+            const person = document.createElement('span');
+            person.textContent = item.person || 'Unknown member';
+
+            const badge = document.createElement('span');
+            badge.className = `category-badge ${categorySlug}`;
+
+            const dot = document.createElement('span');
+            dot.className = 'category-dot';
+            badge.appendChild(dot);
+            badge.appendChild(document.createTextNode(category));
+
+            metaLeft.appendChild(date);
+            metaLeft.appendChild(person);
+            metaLeft.appendChild(badge);
+
+            const hours = document.createElement('span');
+            const hourValue = Number(item.hours || 0);
+            hours.textContent = `${hourValue} ${hourValue === 1 ? 'hour' : 'hours'}`;
+
+            meta.appendChild(metaLeft);
+            meta.appendChild(hours);
+
+            const title = document.createElement('h3');
+            title.className = 'log-title';
+            title.textContent = item.title || 'Design log entry';
+
+            const description = document.createElement('p');
+            description.className = 'log-description';
+            description.textContent = item.description || '';
+
+            card.appendChild(meta);
+            card.appendChild(title);
+            card.appendChild(description);
+
+            if (item.outcome) {
+                const outcome = document.createElement('div');
+                outcome.className = 'outcome-box';
+
+                const outcomeLabel = document.createElement('strong');
+                outcomeLabel.textContent = 'Outcome / Next Step';
+
+                const outcomeText = document.createElement('span');
+                outcomeText.textContent = item.outcome;
+
+                outcome.appendChild(outcomeLabel);
+                outcome.appendChild(outcomeText);
+                card.appendChild(outcome);
+            }
+
+            if (item.attachments && item.attachments.length > 0) {
+                const attachments = document.createElement('div');
+                attachments.className = 'attachments';
+                createAttachmentElements(attachments, item.attachments);
+                card.appendChild(attachments);
+            }
+
+            return card;
+        }
+
+        function updateSummary() {
+            document.getElementById('entryCount').textContent = contributions.length;
+
+            const total = contributions.reduce((sum, item) => sum + Number(item.hours || 0), 0);
+            document.getElementById('totalHours').textContent = Number.isInteger(total) ? total : total.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+
+            document.getElementById('lastEntryDate').textContent = contributions.length
+                ? displayDate(contributions[0])
+                : '—';
+        }
+
+        function renderRecentLog() {
+            const container = document.getElementById('recentLog');
+            container.innerHTML = '';
+
+            if (contributions.length === 0) {
+                container.innerHTML = '<div class="empty-state">No design log entries yet.</div>';
+                return;
+            }
+
+            contributions.slice(0, 3).forEach(item => {
+                container.appendChild(buildLogCard(item));
+            });
+        }
+
+        function renderFullLog() {
+            const personFilter = document.getElementById('filterPerson').value;
+            const categoryFilter = document.getElementById('filterCategory').value;
+            const searchText = document.getElementById('filterSearch').value.trim().toLowerCase();
+            const container = document.getElementById('fullLog');
+
+            const filtered = contributions.filter(item => {
+                const matchesPerson = !personFilter || item.person === personFilter;
+                const matchesCategory = !categoryFilter || (item.category || 'Other') === categoryFilter;
+
+                const searchable = [
+                    item.person,
+                    item.category,
+                    item.title,
+                    item.description,
+                    item.outcome
+                ].filter(Boolean).join(' ').toLowerCase();
+
+                const matchesSearch = !searchText || searchable.includes(searchText);
+                return matchesPerson && matchesCategory && matchesSearch;
+            });
+
+            container.innerHTML = '';
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state">No entries match these filters.</div>';
+                return;
+            }
+
+            filtered.forEach(item => container.appendChild(buildLogCard(item)));
+        }
+
         async function fetchContributions() {
             const { data, error } = await supabaseClient
                 .from('contributions')
                 .select('*')
+                .order('entry_date', { ascending: false, nullsFirst: false })
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error("Error fetching contributions:", error);
+                console.error('Error fetching contributions:', error);
+                alert('Could not load design log entries. Check your Supabase table columns and RLS settings.');
                 return;
             }
 
-            const table = document.getElementById("contributionTable");
-            table.innerHTML = ""; // Clear existing rows
-
-            data.forEach(item => {
-                const row = table.insertRow();
-                row.insertCell(0).textContent = item.person;
-                row.insertCell(1).textContent = item.hours;
-                row.insertCell(2).textContent = item.description;
-
-                const attachCell = row.insertCell(3);
-                attachCell.className = "attachments";
-                (item.attachments || []).forEach(file => {
-                    const link = document.createElement("a");
-                    link.href = file.url;
-                    link.target = "_blank";
-                    link.rel = "noopener";
-                    if (/\.(jpe?g|png)$/i.test(file.name)) {
-                        const img = document.createElement("img");
-                        img.src = file.url;
-                        img.alt = file.name;
-                        link.appendChild(img);
-                    } else {
-                        link.textContent = file.name;
-                    }
-                    attachCell.appendChild(link);
-                });
-            });
+            contributions = data || [];
+            updateSummary();
+            renderRecentLog();
+            renderFullLog();
         }
 
-        // Upload files to the "Attachments" storage bucket and return their names + public URLs
         async function uploadFiles(files) {
             const uploaded = [];
+
             for (const file of files) {
-                const safeName = file.name.replace(/[^\w.\-]/g, "_");
+                const safeName = file.name.replace(/[^\w.\-]/g, '_');
                 const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
 
                 const { error } = await supabaseClient.storage
@@ -221,33 +748,34 @@
 
                 if (error) throw error;
 
-                const { data } = supabaseClient.storage.from('Attachments').getPublicUrl(path);
+                const { data } = supabaseClient.storage
+                    .from('Attachments')
+                    .getPublicUrl(path);
+
                 uploaded.push({ name: file.name, url: data.publicUrl });
             }
+
             return uploaded;
         }
 
-        const TEAM_PASSCODE = "password";
-
         async function addContribution() {
-            const people = [...document.querySelectorAll("#people input:checked")].map(cb => cb.value);
-            const hours = document.getElementById("hours").value;
-            const description = document.getElementById("description").value;
-            const files = document.getElementById("files").files;
+            const entryDate = document.getElementById('entryDate').value;
+            const person = document.getElementById('person').value;
+            const category = document.getElementById('category').value;
+            const hours = document.getElementById('hours').value;
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const outcome = document.getElementById('outcome').value.trim();
+            const files = document.getElementById('files').files;
 
-            if (people.length === 0) {
-                alert("Please select at least one person.");
+            if (!entryDate || !person || !category || !hours || !title || !description || !outcome) {
+                alert('Please complete the date, member, category, hours, title, progress, and outcome/next step.');
                 return;
             }
 
-            if (!hours || !description) {
-                alert("Please enter hours and a description.");
-                return;
-            }
-
-            const userCode = prompt("Enter the team passcode to submit a contribution:");
+            const userCode = prompt('Enter the team passcode to submit a design log entry:');
             if (userCode !== TEAM_PASSCODE) {
-                alert("Incorrect passcode! You do not have permission to post.");
+                alert('Incorrect passcode! You do not have permission to post.');
                 return;
             }
 
@@ -255,37 +783,47 @@
             try {
                 attachments = await uploadFiles(files);
             } catch (uploadError) {
-                console.error("Error uploading files:", uploadError);
-                alert("Failed to upload attachments. Check the storage bucket settings.");
+                console.error('Error uploading files:', uploadError);
+                alert('Failed to upload attachments. Check the storage bucket settings.');
                 return;
             }
 
-            const { data, error } = await supabaseClient
+            const { error } = await supabaseClient
                 .from('contributions')
                 .insert([
                     {
-                        person: people.join(", "),
+                        entry_date: entryDate,
+                        person,
+                        category,
                         hours: parseFloat(hours),
-                        description: description,
-                        attachments: attachments
+                        title,
+                        description,
+                        outcome,
+                        attachments
                     }
                 ]);
 
             if (error) {
-                console.error("Error adding contribution:", error);
-                alert("Failed to submit contribution. Check RLS settings.");
-            } else {
-                document.querySelectorAll("#people input").forEach(cb => cb.checked = false);
-                document.getElementById("hours").value = "";
-                document.getElementById("description").value = "";
-                document.getElementById("files").value = "";
-                fetchContributions(); // Refresh the table list
+                console.error('Error adding contribution:', error);
+                alert('Failed to submit the entry. Check that the new Supabase columns exist and that your RLS policy allows inserts.');
+                return;
             }
+
+            document.getElementById('person').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('hours').value = '';
+            document.getElementById('title').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('outcome').value = '';
+            document.getElementById('files').value = '';
+            document.getElementById('entryDate').valueAsDate = new Date();
+
+            await fetchContributions();
+            showSection('overview');
         }
 
-        // Run fetch on initial page load
+        document.getElementById('entryDate').valueAsDate = new Date();
         fetchContributions();
     </script>
-
 </body>
 </html>
